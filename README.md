@@ -190,24 +190,7 @@ B.NS.FACEBOOK.COM
 
 ---
 
-### 📦 What's Included
 
-```
-domain-monitoring-automation/
-├── n8n-workflow.json          # Complete workflow (import into n8n)
-├── README.md                   # This file
-├── docs/
-│   ├── SETUP.md               # Detailed setup guide
-│   ├── FEATURES.md            # Feature breakdown
-│   ├── TROUBLESHOOTING.md     # Common issues
-│   └── ARCHITECTURE.md        # How it works internally
-├── assets/
-│   ├── infographic-en.png     # English infographic
-│   └── infographic-tr.png     # Turkish infographic
-└── LICENSE                     # MIT License
-```
-
----
 
 ### 🛠️ Troubleshooting
 
@@ -230,14 +213,6 @@ See `docs/TROUBLESHOOTING.md` for detailed solutions.
 
 ---
 
-### 📚 Documentation
-
-- **[SETUP.md](docs/SETUP.md)** - Step-by-step installation guide
-- **[FEATURES.md](docs/FEATURES.md)** - Detailed feature breakdown
-- **[ARCHITECTURE.md](docs/ARCHITECTURE.md)** - Technical internals
-- **[TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md)** - Common issues & fixes
-
----
 
 ### 💡 Use Cases
 
@@ -474,24 +449,7 @@ B.NS.FACEBOOK.COM
 - **Hata İşleme:** Başarısız aramalarda devam eder, hataları günlüğe kaydeder
 - **Veri Gizliliği:** Tablosu özel kalır
 
----
 
-### 📦 İçeride Neler Var?
-
-```
-domain-monitoring-automation/
-├── n8n-workflow.json          # Tam workflow (n8n'ye aktarın)
-├── README.md                   # Bu dosya
-├── docs/
-│   ├── SETUP.md               # Ayrıntılı kurulum rehberi
-│   ├── FEATURES.md            # Özellik açıklaması
-│   ├── TROUBLESHOOTING.md     # Yaygın sorunlar
-│   └── ARCHITECTURE.md        # Dahili nasıl çalışır
-├── assets/
-│   ├── infographic-en.png     # İngilizce infografik
-│   └── infographic-tr.png     # Türkçe infografik
-└── LICENSE                     # MIT Lisansı
-```
 
 ---
 
@@ -516,14 +474,6 @@ Ayrıntılı çözümler için `docs/TROUBLESHOOTING.md`'ye bakın.
 
 ---
 
-### 📚 Dokümantasyon
-
-- **[SETUP.md](docs/SETUP.md)** - Adım adım kurulum rehberi
-- **[FEATURES.md](docs/FEATURES.md)** - Ayrıntılı özellik açıklaması
-- **[ARCHITECTURE.md](docs/ARCHITECTURE.md)** - Teknik iç yapı
-- **[TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md)** - Yaygın sorunlar & çözümler
-
----
 
 ### 💡 Kullanım Alanları
 
@@ -547,11 +497,6 @@ Katkılar memnuniyetle karşılanır! Lütfen:
 
 ---
 
-### 📄 Lisans
-
-MIT Lisansı - Kişisel ve ticari kullanım için ücretsiz. [LICENSE](LICENSE) dosyasına bakın.
-
----
 
 ### 🙋 Destek
 
