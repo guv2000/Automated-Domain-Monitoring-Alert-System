@@ -1,0 +1,769 @@
+{
+  "name": "DomainCheck TR",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 12
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -544,
+        -624
+      ],
+      "id": "4933f29a-a828-4c7b-b79b-2bc79e4af7b1",
+      "name": "Günlük Kontrol"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1dp7Z-MDKDGuJRrHcdY3nMumohCCNd0HR-_mojfEekd4",
+          "mode": "list",
+          "cachedResultName": "Domain Monitor",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1dp7Z-MDKDGuJRrHcdY3nMumohCCNd0HR-_mojfEekd4/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sayfa1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1dp7Z-MDKDGuJRrHcdY3nMumohCCNd0HR-_mojfEekd4/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -384,
+        -624
+      ],
+      "id": "21ea14e0-eae1-4089-9fc9-910a63488230",
+      "name": "Domainleri Al",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "j3F768rfzh9rpu6M",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        -336,
+        -416
+      ],
+      "id": "8c7b5293-4d93-49eb-bff9-f83c21a663d2",
+      "name": "Döngü"
+    },
+    {
+      "parameters": {
+        "jsCode": "const raw = $json[\"Alan Adı\"] ?? \"\";\n\nconst domain = String(raw)\n  .trim()\n  .toLowerCase()\n  .replace(/^https?:\\/\\//, \"\")\n  .replace(/\\/.*$/, \"\");\n\n// 1️⃣ Teknik olarak domain mi?\nconst isValidDomain =\n  domain.includes(\".\") &&\n  !domain.includes(\" \") &&\n  /^[a-z0-9.-]+$/.test(domain);\n\n// TLD\nconst tld = isValidDomain ? domain.split(\".\").pop() : null;\n\n// RDAP haritası\nconst rdapMap = {\n  com: \"https://rdap.verisign.com/com/v1/domain/\",\n  net: \"https://rdap.verisign.com/net/v1/domain/\",\n  name: \"https://rdap.verisign.com/name/v1/domain/\",\n\n  org: \"https://rdap.publicinterestregistry.org/rdap/domain/\",\n  info: \"https://rdap.afilias.net/rdap/domain/\",\n  biz: \"https://rdap.neustar.biz/rdap/domain/\",\n\n  guru: \"https://rdap.donuts.co/rdap/domain/\",\n  email: \"https://rdap.donuts.co/rdap/domain/\",\n  live: \"https://rdap.donuts.co/rdap/domain/\",\n  news: \"https://rdap.donuts.co/rdap/domain/\",\n  media: \"https://rdap.donuts.co/rdap/domain/\",\n  today: \"https://rdap.donuts.co/rdap/domain/\",\n  world: \"https://rdap.donuts.co/rdap/domain/\",\n  digital: \"https://rdap.donuts.co/rdap/domain/\",\n  expert: \"https://rdap.donuts.co/rdap/domain/\",\n  agency: \"https://rdap.donuts.co/rdap/domain/\",\n  technology: \"https://rdap.donuts.co/rdap/domain/\",\n  software: \"https://rdap.donuts.co/rdap/domain/\",\n  solutions: \"https://rdap.donuts.co/rdap/domain/\",\n  services: \"https://rdap.donuts.co/rdap/domain/\",\n  company: \"https://rdap.donuts.co/rdap/domain/\",\n\n  io: \"https://rdap.identitydigital.services/rdap/domain/\",\n  me: \"https://rdap.identitydigital.services/rdap/domain/\",\n  tv: \"https://rdap.identitydigital.services/rdap/domain/\",\n  cc: \"https://rdap.identitydigital.services/rdap/domain/\",\n  mobi: \"https://rdap.identitydigital.services/rdap/domain/\",\n  asia: \"https://rdap.identitydigital.services/rdap/domain/\",\n\n  dev: \"https://rdap.google/registry/domain/\",\n  app: \"https://rdap.google/registry/domain/\",\n  how: \"https://rdap.google/registry/domain/\",\n  page: \"https://rdap.google/registry/domain/\",\n  zip: \"https://rdap.google/registry/domain/\",\n  foo: \"https://rdap.google/registry/domain/\",\n  bar: \"https://rdap.google/registry/domain/\",\n\n  de: \"https://rdap.denic.de/domain/\",\n  fr: \"https://rdap.afnic.fr/domain/\",\n  nl: \"https://rdap.sidn.nl/domain/\",\n  eu: \"https://rdap.eu/domain/\",\n  uk: \"https://rdap.nominet.uk/domain/\",\n  it: \"https://rdap.nic.it/domain/\",\n  es: \"https://rdap.nic.es/domain/\",\n  ch: \"https://rdap.nic.ch/domain/\",\n  at: \"https://rdap.nic.at/domain/\",\n\n  se: \"https://rdap.iis.se/domain/\",\n  no: \"https://rdap.norid.no/domain/\",\n  dk: \"https://rdap.dk-hostmaster.dk/domain/\",\n  fi: \"https://rdap.traficom.fi/domain/\",\n\n  us: \"https://rdap.nic.us/domain/\",\n  ca: \"https://rdap.cira.ca/rdap/domain/\",\n  au: \"https://rdap.auda.org.au/domain/\",\n  jp: \"https://rdap.jprs.jp/domain/\",\n  cn: \"https://rdap.cnnic.cn/domain/\",\n  ru: \"https://rdap.tcinet.ru/domain/\",\n  br: \"https://rdap.registro.br/domain/\",\n};\n\n// 2️⃣ GERÇEK supported tanımı\nconst supported = Boolean(isValidDomain && tld && rdapMap[tld]);\n\n$input.first().json.row_number\n\n\nreturn [{\n  domain,\n  tld,\n  supported,\n  rdapUrl: supported ? rdapMap[tld] + domain : \"\",\n  row_number: $input.first().json.row_number ?? null,\n  old_status: $json[\"Son Durum\"] || \"\",\n  old_expiry: $json[\"Son Geçerlilik Tarihi\"] || \"\",\n  old_check: $json[\"Son Kontrol\"] || \"\"\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -192,
+        -544
+      ],
+      "id": "d6a4fe1c-b9dc-4d87-aee3-2fcb9f5a8be8",
+      "name": "Veri Hazırla"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "27dc3b9d-e689-4d1f-8427-3439f3dacac8",
+              "leftValue": "={{ $json.supported }}",
+              "rightValue": false,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -48,
+        -432
+      ],
+      "id": "b40817d4-f8ed-4c65-9f5f-29c6d701acbf",
+      "name": "Domain Destekleniyor mu?"
+    },
+    {
+      "parameters": {
+        "url": "={{ $('Veri Hazırla').item.json.rdapUrl }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        112,
+        -544
+      ],
+      "id": "398ec66b-f32f-4297-8c7b-de84490a3db5",
+      "name": "Domaini Sorgula",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "de4601bd-460b-4e22-a885-d0c375b0a651",
+              "leftValue": "={{ !$json.error }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        320,
+        -560
+      ],
+      "id": "21e75ecb-72aa-4b3b-b73a-7c031bb047ee",
+      "name": "Başarılı mı?"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// =======================\n// 1️⃣ TARİH FORMATLAYICI\n// =======================\nconst fmt = (d) => {\n  if (!d) return \"\";\n  const date = new Date(d);\n  if (isNaN(date)) return \"\";\n  return date.toLocaleString(\"tr-TR\", {\n    day: \"2-digit\",\n    month: \"2-digit\",\n    year: \"numeric\",\n    hour: \"2-digit\",\n    minute: \"2-digit\"\n  });\n};\n\n// =======================\n// 2️⃣ RDAP PARSE\n// =======================\nconst rdap = JSON.parse($json.data);\n\n// STATUS\nconst status = Array.isArray(rdap.status)\n  ? rdap.status.join(\", \").toLowerCase()\n  : (rdap.status || \"\").toLowerCase();\n\n// EVENTS\nconst events = Array.isArray(rdap.events) ? rdap.events : [];\nconst getEventDate = (type) =>\n  events.find(e => e.eventAction === type)?.eventDate || \"\";\n\n// Tarihler (RAW)\nconst expiry_raw = getEventDate(\"expiration\");\nconst created_raw = getEventDate(\"registration\");\nconst rdap_update_raw = getEventDate(\"last update of RDAP database\");\n\n// Formatlı tarihler\nconst expiry_fmt = fmt(expiry_raw);\nconst created_fmt = fmt(created_raw);\nconst rdap_update_fmt = fmt(rdap_update_raw);\n\n// =======================\n// 4️⃣ NAMESERVERS\n// =======================\nconst nameservers = (rdap.nameservers || [])\n  .map(ns => ns.ldhName)\n  .filter(Boolean)\n  .join(\", \");\n\n// =======================\n// 5️⃣ SHEET’TEN GELEN ESKİ VERİLER\n// =======================\n\n\nconst safe = (v) => (v === null || v === undefined) ? \"\" : String(v).trim();\n\nconst old_check  = safe($('Domain Destekleniyor mu?').item.json.old_check);\nconst old_status = safe($('Domain Destekleniyor mu?').item.json.old_status).toLowerCase();\nconst old_expiry = safe($('Domain Destekleniyor mu?').item.json.old_expiry);\n\n// 👉 TEK VE NET İLK KONTROL KURALI\nconst is_first_check = (old_status === \"\" && old_expiry === \"\");\n\n// =======================\n// 6️⃣ DEĞİŞİM KONTROLLERİ\n// =======================\nconst changed_status = !is_first_check && status !== old_status;\nconst changed_expiry = !is_first_check && expiry_fmt !== old_expiry;\nconst has_change = is_first_check || changed_status || changed_expiry;\n\n// =======================\n// 7️⃣ EXPIRY HESAPLARI\n// =======================\nlet days_to_expiry = 0;\nlet is_expiring_soon = false;\n\nif (expiry_raw) {\n  const now = new Date();\n  const exp = new Date(expiry_raw);\n  days_to_expiry = Math.ceil((exp - now) / 86400000);\n  if (days_to_expiry < 0) days_to_expiry = 0;\n  is_expiring_soon = days_to_expiry <= 30;\n}\n\n// =======================\n// 8️⃣ DOMAIN\n// =======================\nconst domain = $('Veri Hazırla').item.json.domain;\n\n// =======================\n// 9️⃣ MESAJ\n// =======================\nlet changeText = \"\";\n\nif (is_first_check) {\n  changeText = \"🆕 İlk kontrol yapıldı, sheet dolduruldu.\";\n} else {\n  const changes = [];\n  if (changed_status) {\n    changes.push(`🔄 Durum değişti: ${old_status || \"-\"} → ${status}`);\n  }\n  if (changed_expiry) {\n    changes.push(`📅 Bitiş tarihi değişti: ${old_expiry || \"-\"} → ${expiry_fmt}`);\n  }\n  changeText = changes.length ? changes.join(\"\\n\") : \"ℹ️ Değişiklik yok.\";\n}\n\nconst message = `\n🌐 Alan Adı Takibi\n🔗 Domain: ${domain}\n📌 Mevcut Durum: ${status}\n📅 Bitiş Tarihi: ${expiry_fmt}\n⏳ Kalan Gün: ${days_to_expiry}\n\n${changeText}\n\n🌍 Nameserverlar:\n${nameservers || \"-\"}\n\n🕒 Son Kontrol: ${fmt(new Date().toISOString())}\n`.trim();\n\n// =======================\n// 🔟 RETURN (DEBUG’LI)\n// =======================\nreturn {\n  // 🔍 DEBUG\n  debug_old_status: old_status,\n  debug_old_expiry: old_expiry,\n  debug_old_check: old_check,\n  debug_new_status: status,\n  debug_new_expiry: expiry_fmt,\n\n  // ✅ ASIL DEĞERLER\n  new_status: status,\n  new_expiry: expiry_fmt,\n  created: created_fmt,\n  nameservers,\n  is_first_check,\n  has_change,\n  changed_status,\n  changed_expiry,\n  days_to_expiry,\n  is_expiring_soon,\n  rdap_last_update: rdap_update_fmt,\n  check_time: fmt(new Date().toISOString()),\n  message\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        496,
+        -496
+      ],
+      "id": "c400d77b-8a5a-4ec0-b0fa-92068229305b",
+      "name": "Veri Analizi"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1dp7Z-MDKDGuJRrHcdY3nMumohCCNd0HR-_mojfEekd4",
+          "mode": "list",
+          "cachedResultName": "Domain Monitor",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1dp7Z-MDKDGuJRrHcdY3nMumohCCNd0HR-_mojfEekd4/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sayfa1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1dp7Z-MDKDGuJRrHcdY3nMumohCCNd0HR-_mojfEekd4/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "row_number": "={{ $('Döngü').item.json.row_number }}",
+            "Son Durum": "={{ $json.new_status }}",
+            "Son Geçerlilik Tarihi": "={{ $json.new_expiry }}",
+            "Kayıt Tarihi": "={{ $json.created }}",
+            "Nameserverlar": "={{ $json.nameservers }}",
+            "Kalan Gün": "={{ $json.days_to_expiry }}",
+            "Yakında Bitecek": "={{ $json.is_expiring_soon }}",
+            "RDAP Güncelleme Zamanı": "={{ $json.rdap_last_update }}",
+            "Son Kontrol": "={{ $json.check_time }}"
+          },
+          "matchingColumns": [
+            "row_number"
+          ],
+          "schema": [
+            {
+              "id": "Alan Adı",
+              "displayName": "Alan Adı",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Kalan Gün",
+              "displayName": "Kalan Gün",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Son Durum",
+              "displayName": "Son Durum",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Son Geçerlilik Tarihi",
+              "displayName": "Son Geçerlilik Tarihi",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Kayıt Tarihi",
+              "displayName": "Kayıt Tarihi",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Nameserverlar",
+              "displayName": "Nameserverlar",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Yakında Bitecek",
+              "displayName": "Yakında Bitecek",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "RDAP Güncelleme Zamanı",
+              "displayName": "RDAP Güncelleme Zamanı",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Son Kontrol",
+              "displayName": "Son Kontrol",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        672,
+        -544
+      ],
+      "id": "c6d8a045-90ec-4195-ba60-3114dd0f8fb9",
+      "name": "Sheet'i Güncelle",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "j3F768rfzh9rpu6M",
+          "name": "Google Sheets account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "bb75a39e-4d89-41ee-bafb-8a5fab19bda7",
+              "leftValue": "={{ $('Veri Analizi').item.json.has_change }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "66484f7a-2646-47d4-9566-97cac966aaf7",
+              "leftValue": "={{ $('Veri Analizi').item.json.is_expiring_soon }}",
+              "rightValue": false,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        832,
+        -544
+      ],
+      "id": "3bcacff7-0e29-438d-bc57-e8c8585f2466",
+      "name": "Bildirim Gerekli mi?"
+    },
+    {
+      "parameters": {
+        "chatId": "6035403828",
+        "text": "={{ $('Veri Analizi').item.json.message }}",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1104,
+        -544
+      ],
+      "id": "3ce7a102-720b-4ddb-93e8-9dc21b41fad4",
+      "name": "Telegram Mesajı Gönder",
+      "webhookId": "b25f3d03-97a6-4589-b3ea-48ace1bb35d5",
+      "credentials": {
+        "telegramApi": {
+          "id": "AG8xdH4yLAQq2pdv",
+          "name": "Telegram account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "amount": 1
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        1264,
+        -336
+      ],
+      "id": "747c86cd-df73-487a-b9ed-f09bfe07d015",
+      "name": "Motoru Soğut",
+      "webhookId": "2b682af5-9c37-48bd-a009-9b9fb7e6e2a1",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1dp7Z-MDKDGuJRrHcdY3nMumohCCNd0HR-_mojfEekd4",
+          "mode": "list",
+          "cachedResultName": "Domain Monitor",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1dp7Z-MDKDGuJRrHcdY3nMumohCCNd0HR-_mojfEekd4/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sayfa1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1dp7Z-MDKDGuJRrHcdY3nMumohCCNd0HR-_mojfEekd4/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "row_number": "={{ $json.row_number }}",
+            "Son Durum": "DESTEKLENMİYOR",
+            "Son Kontrol": "={{ new Date().toISOString() }}"
+          },
+          "matchingColumns": [
+            "row_number"
+          ],
+          "schema": [
+            {
+              "id": "Alan Adı",
+              "displayName": "Alan Adı",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Son Durum",
+              "displayName": "Son Durum",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Son Geçerlilik Tarihi",
+              "displayName": "Son Geçerlilik Tarihi",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Son Kontrol",
+              "displayName": "Son Kontrol",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        672,
+        -320
+      ],
+      "id": "042d7455-133f-4bd3-af32-2c341358c047",
+      "name": "Sheet'i Güncelle1",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "j3F768rfzh9rpu6M",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "Bu n8n workflow, Google Sheets’te listelenen alan adlarını RDAP üzerinden\ngünlük olarak kontrol eder.\n\n– Domain durumu ve bitiş tarihi değişirse Telegram bildirimi gönderir\n– Süresi yaklaşan alan adlarını tespit eder\n– İlk kontrolde sheet’i otomatik doldurur",
+        "width": 560,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -80,
+        -784
+      ],
+      "typeVersion": 1,
+      "id": "5e750185-33b6-4b56-bfe9-7b354665830a",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "KURULUM ADIMLARI\n1) Google Sheets credential bağla\n2) Kendi sheet’ini seç\n3) Telegram bot bağla\n4) chatId alanını doldur\n5) Workflow’u aktif et",
+        "width": 256,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        496,
+        -784
+      ],
+      "typeVersion": 1,
+      "id": "947426c2-fc70-4ade-9157-39d54c4dd23a",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "content": "Örnek Sheet Dosyası:\n\nhttps://docs.google.com/spreadsheets/d/1dp7Z-MDKDGuJRrHcdY3nMumohCCNd0HR-_mojfEekd4/edit?usp=sharing"
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        768,
+        -784
+      ],
+      "typeVersion": 1,
+      "id": "92ffa002-08b8-4ef9-9922-6514b2d86197",
+      "name": "Sticky Note2"
+    }
+  ],
+  "pinData": {
+    "Günlük Kontrol": [
+      {
+        "json": {
+          "timestamp": "2026-01-27T09:42:17.861-05:00",
+          "Readable date": "January 27th 2026, 9:42:17 am",
+          "Readable time": "9:42:17 am",
+          "Day of week": "Tuesday",
+          "Year": "2026",
+          "Month": "January",
+          "Day of month": "27",
+          "Hour": "09",
+          "Minute": "42",
+          "Second": "17",
+          "Timezone": "America/New_York (UTC-05:00)"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Günlük Kontrol": {
+      "main": [
+        [
+          {
+            "node": "Domainleri Al",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Domainleri Al": {
+      "main": [
+        [
+          {
+            "node": "Döngü",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Döngü": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Veri Hazırla",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Veri Hazırla": {
+      "main": [
+        [
+          {
+            "node": "Domain Destekleniyor mu?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Domain Destekleniyor mu?": {
+      "main": [
+        [
+          {
+            "node": "Domaini Sorgula",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Sheet'i Güncelle1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Domaini Sorgula": {
+      "main": [
+        [
+          {
+            "node": "Başarılı mı?",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Sheet'i Güncelle1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Başarılı mı?": {
+      "main": [
+        [
+          {
+            "node": "Veri Analizi",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Motoru Soğut",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Veri Analizi": {
+      "main": [
+        [
+          {
+            "node": "Sheet'i Güncelle",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sheet'i Güncelle": {
+      "main": [
+        [
+          {
+            "node": "Bildirim Gerekli mi?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Bildirim Gerekli mi?": {
+      "main": [
+        [
+          {
+            "node": "Telegram Mesajı Gönder",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Motoru Soğut",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Telegram Mesajı Gönder": {
+      "main": [
+        [
+          {
+            "node": "Motoru Soğut",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Motoru Soğut": {
+      "main": [
+        [
+          {
+            "node": "Döngü",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sheet'i Güncelle1": {
+      "main": [
+        [
+          {
+            "node": "Motoru Soğut",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false,
+    "timeSavedMode": "fixed",
+    "timezone": "Europe/Istanbul",
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "none",
+    "saveExecutionProgress": false,
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "versionId": "e239d141-c509-4059-89f4-313d8b832ca6",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "332f92a4f66ba5f8abec3e8b73ad6241aa6ce0a2fd306c667655ec36dfc94809"
+  },
+  "id": "EnvAGd9HlI64-60a5L9we",
+  "tags": []
+}
