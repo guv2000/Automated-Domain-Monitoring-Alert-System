@@ -1,0 +1,811 @@
+{
+  "name": "Domain Check",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 12
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -64,
+        -160
+      ],
+      "id": "5935861d-2995-460c-bd25-21e0bf778c8a",
+      "name": "Daily Check"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1Dmgj2YmimBJbqhWPVnyxixNKe7D8m5AYFmJtQRI-XUQ",
+          "mode": "list",
+          "cachedResultName": "Domain Monitor",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Dmgj2YmimBJbqhWPVnyxixNKe7D8m5AYFmJtQRI-XUQ/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "P1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Dmgj2YmimBJbqhWPVnyxixNKe7D8m5AYFmJtQRI-XUQ/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        96,
+        -160
+      ],
+      "id": "a63ea862-4b22-43d2-86cf-af8ddf1339c0",
+      "name": "Get Domains",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "j3F768rfzh9rpu6M",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        144,
+        48
+      ],
+      "id": "c854f57f-4c91-4b7e-aa50-f595f118352b",
+      "name": "Loop"
+    },
+    {
+      "parameters": {
+        "jsCode": "const raw = $input.first().json.Domain ?? \"\";\n\nconst domain = String(raw)\n  .trim()\n  .toLowerCase()\n  .replace(/^https?:\\/\\//, \"\")\n  .replace(/\\/.*$/, \"\");\n\n// 1️⃣ Is it technically a domain?\nconst isValidDomain =\n  domain.includes(\".\") &&\n  !domain.includes(\" \") &&\n  /^[a-z0-9.-]+$/.test(domain);\n\n// TLD\nconst tld = isValidDomain ? domain.split(\".\").pop() : null;\n\n// RDAP mapping\nconst rdapMap = {\n  com: \"https://rdap.verisign.com/com/v1/domain/\",\n  net: \"https://rdap.verisign.com/net/v1/domain/\",\n  name: \"https://rdap.verisign.com/name/v1/domain/\",\n\n  org: \"https://rdap.publicinterestregistry.org/rdap/domain/\",\n  info: \"https://rdap.afilias.net/rdap/domain/\",\n  biz: \"https://rdap.neustar.biz/rdap/domain/\",\n\n  guru: \"https://rdap.donuts.co/rdap/domain/\",\n  email: \"https://rdap.donuts.co/rdap/domain/\",\n  live: \"https://rdap.donuts.co/rdap/domain/\",\n  news: \"https://rdap.donuts.co/rdap/domain/\",\n  media: \"https://rdap.donuts.co/rdap/domain/\",\n  today: \"https://rdap.donuts.co/rdap/domain/\",\n  world: \"https://rdap.donuts.co/rdap/domain/\",\n  digital: \"https://rdap.donuts.co/rdap/domain/\",\n  expert: \"https://rdap.donuts.co/rdap/domain/\",\n  agency: \"https://rdap.donuts.co/rdap/domain/\",\n  technology: \"https://rdap.donuts.co/rdap/domain/\",\n  software: \"https://rdap.donuts.co/rdap/domain/\",\n  solutions: \"https://rdap.donuts.co/rdap/domain/\",\n  services: \"https://rdap.donuts.co/rdap/domain/\",\n  company: \"https://rdap.donuts.co/rdap/domain/\",\n\n  io: \"https://rdap.identitydigital.services/rdap/domain/\",\n  me: \"https://rdap.identitydigital.services/rdap/domain/\",\n  tv: \"https://rdap.identitydigital.services/rdap/domain/\",\n  cc: \"https://rdap.identitydigital.services/rdap/domain/\",\n  mobi: \"https://rdap.identitydigital.services/rdap/domain/\",\n  asia: \"https://rdap.identitydigital.services/rdap/domain/\",\n\n  dev: \"https://rdap.google/registry/domain/\",\n  app: \"https://rdap.google/registry/domain/\",\n  how: \"https://rdap.google/registry/domain/\",\n  page: \"https://rdap.google/registry/domain/\",\n  zip: \"https://rdap.google/registry/domain/\",\n  foo: \"https://rdap.google/registry/domain/\",\n  bar: \"https://rdap.google/registry/domain/\",\n\n  de: \"https://rdap.denic.de/domain/\",\n  fr: \"https://rdap.afnic.fr/domain/\",\n  nl: \"https://rdap.sidn.nl/domain/\",\n  eu: \"https://rdap.eu/domain/\",\n  uk: \"https://rdap.nominet.uk/domain/\",\n  it: \"https://rdap.nic.it/domain/\",\n  es: \"https://rdap.nic.es/domain/\",\n  ch: \"https://rdap.nic.ch/domain/\",\n  at: \"https://rdap.nic.at/domain/\",\n\n  se: \"https://rdap.iis.se/domain/\",\n  no: \"https://rdap.norid.no/domain/\",\n  dk: \"https://rdap.dk-hostmaster.dk/domain/\",\n  fi: \"https://rdap.traficom.fi/domain/\",\n\n  us: \"https://rdap.nic.us/domain/\",\n  ca: \"https://rdap.cira.ca/rdap/domain/\",\n  au: \"https://rdap.auda.org.au/domain/\",\n  jp: \"https://rdap.jprs.jp/domain/\",\n  cn: \"https://rdap.cnnic.cn/domain/\",\n  ru: \"https://rdap.tcinet.ru/domain/\",\n  br: \"https://rdap.registro.br/domain/\",\n};\n\n// 2️⃣ REAL supported definition\nconst supported = Boolean(isValidDomain && tld && rdapMap[tld]);\n\n$input.first().json.row_number\n\n\nreturn [{\n  domain,\n  tld,\n  supported,\n  rdapUrl: supported ? rdapMap[tld] + domain : \"\",\n  row_number: $input.first().json.row_number ?? null,\n  old_status: $json[\"Latest Status\"] || \"\",\n  old_expiry: $json[\"Expiration Date\"] || \"\",\n  old_check: $json[\"Last Check\"] || \"\"\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        288,
+        -80
+      ],
+      "id": "985fc469-9577-4bf1-b0ee-4369218f018c",
+      "name": "Prepare Data"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "27dc3b9d-e689-4d1f-8427-3439f3dacac8",
+              "leftValue": "={{ $json.supported }}",
+              "rightValue": false,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        432,
+        32
+      ],
+      "id": "3c74c7c2-81fa-4d3a-9409-d3ca53dbe444",
+      "name": "Is Domain Supported?"
+    },
+    {
+      "parameters": {
+        "url": "={{ $('Prepare Data').item.json.rdapUrl }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        592,
+        -80
+      ],
+      "id": "c4079c28-e0af-4e4f-9bc8-dd7ccd0fc4dd",
+      "name": "Query Domain",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "de4601bd-460b-4e22-a885-d0c375b0a651",
+              "leftValue": "={{ !$json.error }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        800,
+        -96
+      ],
+      "id": "433080c2-b172-4806-8230-b0aa9a03fb54",
+      "name": "Successful?"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// =======================\n// 1️⃣ DATE FORMATTER\n// =======================\nconst fmt = (d) => {\n  if (!d) return \"\";\n  const date = new Date(d);\n  if (isNaN(date)) return \"\";\n  return date.toLocaleString(\"en-US\", {\n    day: \"2-digit\",\n    month: \"2-digit\",\n    year: \"numeric\",\n    hour: \"2-digit\",\n    minute: \"2-digit\"\n  });\n};\n\n// =======================\n// 2️⃣ RDAP PARSE\n// =======================\nconst rdap = JSON.parse($json.data);\n\n// STATUS\nconst status = Array.isArray(rdap.status)\n  ? rdap.status.join(\", \").toLowerCase()\n  : (rdap.status || \"\").toLowerCase();\n\n// EVENTS\nconst events = Array.isArray(rdap.events) ? rdap.events : [];\nconst getEventDate = (type) =>\n  events.find(e => e.eventAction === type)?.eventDate || \"\";\n\n// Dates (RAW)\nconst expiry_raw = getEventDate(\"expiration\");\nconst created_raw = getEventDate(\"registration\");\nconst rdap_update_raw = getEventDate(\"last update of RDAP database\");\n\n// Formatted dates\nconst expiry_fmt = fmt(expiry_raw);\nconst created_fmt = fmt(created_raw);\nconst rdap_update_fmt = fmt(rdap_update_raw);\n\n// =======================\n// 4️⃣ NAMESERVERS\n// =======================\nconst nameservers = (rdap.nameservers || [])\n  .map(ns => ns.ldhName)\n  .filter(Boolean)\n  .join(\", \");\n\n// =======================\n// 5️⃣ SHEET’TEN GELEN ESKİ VERİLER\n// =======================\n\n\nconst safe = (v) => (v === null || v === undefined) ? \"\" : String(v).trim();\n\nconst old_check  = safe($('Is Domain Supported?').item.json.old_check);\nconst old_status = safe($('Is Domain Supported?').item.json.old_status).toLowerCase();\nconst old_expiry = safe($('Is Domain Supported?').item.json.old_expiry);\n\n// 👉 FIRST CHECK RULE\nconst is_first_check = (old_status === \"\" && old_expiry === \"\");\n\n// =======================\n// 6️⃣ CHANGE CONTROLS\n// =======================\nconst changed_status = !is_first_check && status !== old_status;\nconst changed_expiry = !is_first_check && expiry_fmt !== old_expiry;\nconst has_change = is_first_check || changed_status || changed_expiry;\n\n// =======================\n// 7️⃣ EXPIRATION CALCULATIONS\n// =======================\nlet days_to_expiry = 0;\nlet is_expiring_soon = false;\n\nif (expiry_raw) {\n  const now = new Date();\n  const exp = new Date(expiry_raw);\n  days_to_expiry = Math.ceil((exp - now) / 86400000);\n  if (days_to_expiry < 0) days_to_expiry = 0;\n  is_expiring_soon = days_to_expiry <= 30;\n}\n\n// =======================\n// 8️⃣ DOMAIN\n// =======================\nconst domain = $('Prepare Data').item.json.domain;\n\n// =======================\n// 9️⃣ MESSAGE\n// =======================\nlet changeText = \"\";\n\nif (is_first_check) {\n  changeText = \"🆕 First check completed, sheet updated.\";\n} else {\n  const changes = [];\n  if (changed_status) {\n    changes.push(`🔄 Status changed: ${old_status || \"-\"} → ${status}`);\n  }\n  if (changed_expiry) {\n    changes.push(`📅 Expiration date changed: ${old_expiry || \"-\"} → ${expiry_fmt}`);\n  }\n  changeText = changes.length ? changes.join(\"\\n\") : \"ℹ️ No changes.\";\n}\n\nconst message = `\n🌐 Domain Check Automation\n🔗 Domain: ${domain}\n📌 Current Status: ${status}\n📅 Expiration Date: ${expiry_fmt}\n⏳ Days Remaining: ${days_to_expiry}\n\n${changeText}\n\n🌍 Nameservers:\n${nameservers || \"-\"}\n\n🕒 Last Check: ${fmt(new Date().toISOString())}\n`.trim();\n\n// =======================\n// 🔟 RETURN (WITH DEBUG)\n// =======================\nreturn {\n  // 🔍 DEBUG\n  debug_old_status: old_status,\n  debug_old_expiry: old_expiry,\n  debug_old_check: old_check,\n  debug_new_status: status,\n  debug_new_expiry: expiry_fmt,\n\n  // ✅ MAIN VALUES\n  new_status: status,\n  new_expiry: expiry_fmt,\n  created: created_fmt,\n  nameservers,\n  is_first_check,\n  has_change,\n  changed_status,\n  changed_expiry,\n  days_to_expiry,\n  is_expiring_soon,\n  rdap_last_update: rdap_update_fmt,\n  check_time: fmt(new Date().toISOString()),\n  message\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        976,
+        -32
+      ],
+      "id": "52779230-8bf6-4376-8826-6856a612a81b",
+      "name": "Data Analysis"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1Dmgj2YmimBJbqhWPVnyxixNKe7D8m5AYFmJtQRI-XUQ",
+          "mode": "list",
+          "cachedResultName": "Domain Monitor",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Dmgj2YmimBJbqhWPVnyxixNKe7D8m5AYFmJtQRI-XUQ/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "P1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Dmgj2YmimBJbqhWPVnyxixNKe7D8m5AYFmJtQRI-XUQ/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "row_number": "={{ $('Loop').item.json.row_number }}",
+            "Domain": "={{ $('Loop').item.json.Domain }}",
+            "Days Remaining": "={{ $json.days_to_expiry }}",
+            "Latest Status": "={{ $json.new_status }}",
+            "Expiration Date": "={{ $json.new_expiry }}",
+            "Registration Date": "={{ $json.created }}",
+            "Nameservers": "={{ $json.nameservers }}",
+            "Expiring Soon": "={{ $json.is_expiring_soon }}",
+            "RDAP Last Update": "={{ $json.rdap_last_update }}",
+            "Last Check": "={{ $json.check_time }}"
+          },
+          "matchingColumns": [
+            "row_number"
+          ],
+          "schema": [
+            {
+              "id": "Domain",
+              "displayName": "Domain",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Days Remaining",
+              "displayName": "Days Remaining",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Latest Status",
+              "displayName": "Latest Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Expiration Date",
+              "displayName": "Expiration Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Registration Date",
+              "displayName": "Registration Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Nameservers",
+              "displayName": "Nameservers",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Expiring Soon",
+              "displayName": "Expiring Soon",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "RDAP Last Update",
+              "displayName": "RDAP Last Update",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Last Check",
+              "displayName": "Last Check",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1152,
+        -80
+      ],
+      "id": "cb49db7e-51b1-4773-bc97-c1820ac5b20f",
+      "name": "Update Sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "j3F768rfzh9rpu6M",
+          "name": "Google Sheets account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "bb75a39e-4d89-41ee-bafb-8a5fab19bda7",
+              "leftValue": "={{ $('Data Analysis').item.json.has_change }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "66484f7a-2646-47d4-9566-97cac966aaf7",
+              "leftValue": "={{ $('Data Analysis').item.json.is_expiring_soon }}",
+              "rightValue": false,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1312,
+        -80
+      ],
+      "id": "074613bb-d19d-40b6-b3b5-1ab4c92bfa7a",
+      "name": "Is Notification Needed?"
+    },
+    {
+      "parameters": {
+        "chatId": "9035403828",
+        "text": "={{ $('Data Analysis').item.json.message }}",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1584,
+        -80
+      ],
+      "id": "ff5ee942-1e89-46e7-bc81-69da84451a88",
+      "name": "Send Telegram Message",
+      "webhookId": "b25f3d03-97a6-4589-b3ea-48ace1bb35d5",
+      "credentials": {
+        "telegramApi": {
+          "id": "AG8xdH4yLAQq2pdv",
+          "name": "Telegram account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "amount": 1
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        1744,
+        128
+      ],
+      "id": "320fa4d3-df5f-4e84-8057-3ab23e7ad463",
+      "name": "Cool Down Engine",
+      "webhookId": "2b682af5-9c37-48bd-a009-9b9fb7e6e2a1",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1Dmgj2YmimBJbqhWPVnyxixNKe7D8m5AYFmJtQRI-XUQ",
+          "mode": "list",
+          "cachedResultName": "Domain Monitor",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Dmgj2YmimBJbqhWPVnyxixNKe7D8m5AYFmJtQRI-XUQ/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "P1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Dmgj2YmimBJbqhWPVnyxixNKe7D8m5AYFmJtQRI-XUQ/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "row_number": "={{ $json.row_number }}",
+            "Last Check": "={{ new Date().toISOString() }}",
+            "Latest Status": "NOT SUPPORTED"
+          },
+          "matchingColumns": [
+            "row_number"
+          ],
+          "schema": [
+            {
+              "id": "Domain",
+              "displayName": "Domain",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Days Remaining",
+              "displayName": "Days Remaining",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Latest Status",
+              "displayName": "Latest Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Expiration Date",
+              "displayName": "Expiration Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Registration Date",
+              "displayName": "Registration Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Nameservers",
+              "displayName": "Nameservers",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Expiring Soon",
+              "displayName": "Expiring Soon",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "RDAP Last Update",
+              "displayName": "RDAP Last Update",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Last Check",
+              "displayName": "Last Check",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1152,
+        144
+      ],
+      "id": "f078d2c4-4fe6-4895-a041-72fd4582b738",
+      "name": "Update Sheet1",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "j3F768rfzh9rpu6M",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "This n8n workflow checks domain names listed in Google Sheets daily via RDAP.\n\n– Sends Telegram notification if domain status or expiration date changes\n– Detects domains approaching expiration\n– Automatically populates the sheet on first check",
+        "width": 560,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        400,
+        -320
+      ],
+      "typeVersion": 1,
+      "id": "b1df7a81-d2f4-47a2-841f-0ec631eb214d",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "SETUP STEPS\n1) Connect Google Sheets credential\n2) Select your sheet\n3) Connect Telegram bot\n4) Fill in chatId field\n5) Activate the workflow",
+        "width": 256,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        976,
+        -320
+      ],
+      "typeVersion": 1,
+      "id": "05f0a80a-784e-4401-a9e5-35ba6d7ad2cd",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "content": "Example Sheet File:\n\nhttps://docs.google.com/spreadsheets/d/1Dmgj2YmimBJbqhWPVnyxixNKe7D8m5AYFmJtQRI-XUQ/edit?usp=sharing"
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        1248,
+        -320
+      ],
+      "typeVersion": 1,
+      "id": "0ec598d9-669f-407c-ac26-1ccbafe52e36",
+      "name": "Sticky Note2"
+    }
+  ],
+  "pinData": {
+    "Daily Check": [
+      {
+        "json": {
+          "timestamp": "2026-01-27T09:42:17.861-05:00",
+          "Readable date": "January 27th 2026, 9:42:17 am",
+          "Readable time": "9:42:17 am",
+          "Day of week": "Tuesday",
+          "Year": "2026",
+          "Month": "January",
+          "Day of month": "27",
+          "Hour": "09",
+          "Minute": "42",
+          "Second": "17",
+          "Timezone": "America/New_York (UTC-05:00)"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Daily Check": {
+      "main": [
+        [
+          {
+            "node": "Get Domains",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Domains": {
+      "main": [
+        [
+          {
+            "node": "Loop",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Prepare Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Data": {
+      "main": [
+        [
+          {
+            "node": "Is Domain Supported?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Domain Supported?": {
+      "main": [
+        [
+          {
+            "node": "Query Domain",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Update Sheet1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Query Domain": {
+      "main": [
+        [
+          {
+            "node": "Successful?",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Update Sheet1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Successful?": {
+      "main": [
+        [
+          {
+            "node": "Data Analysis",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Cool Down Engine",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Data Analysis": {
+      "main": [
+        [
+          {
+            "node": "Update Sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Sheet": {
+      "main": [
+        [
+          {
+            "node": "Is Notification Needed?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Notification Needed?": {
+      "main": [
+        [
+          {
+            "node": "Send Telegram Message",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Cool Down Engine",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Telegram Message": {
+      "main": [
+        [
+          {
+            "node": "Cool Down Engine",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Cool Down Engine": {
+      "main": [
+        [
+          {
+            "node": "Loop",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Sheet1": {
+      "main": [
+        [
+          {
+            "node": "Cool Down Engine",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false
+  },
+  "versionId": "f803a921-85fb-4acc-866d-1e2e224c9e77",
+  "meta": {
+    "instanceId": "332f92a4f66ba5f8abec3e8b73ad6241aa6ce0a2fd306c667655ec36dfc94809"
+  },
+  "id": "BolQzEnzJlbIya_xy4uKa",
+  "tags": []
+}
